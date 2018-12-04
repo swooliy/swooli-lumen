@@ -1,0 +1,19 @@
+{
+    "name": "ney/swoole-cli",
+    "description": "Swoole CLI Tool",
+    "type": "project",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "require": {
+        "symfony/console": "*",
+        "symfony/process": "^4.2@dev"    
+    },
+    "bin": [
+        "swoole-cli"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Ney\\SwooleCli\\": "./src/Ney/SwooleCli"
+        }
+    }
+}

@@ -1,0 +1,5 @@
+vendor
+app.php
+.idea
+.vscode
+storage

@@ -1,0 +1,20 @@
+#!/usr/bin/env php
+
+<?php
+
+require __DIR__.'/vendor/autoload.php';
+
+define("ROOT", __DIR__);
+
+use Symfony\Component\Console\Application;
+
+$application = new Application('swoole-cli', '0.0.1');
+
+// ... register commands
+
+$application->add(new Ney\SwooleCli\Lumen\StartCommand());
+$application->add(new Ney\SwooleCli\Lumen\StopCommand());
+$application->add(new Ney\SwooleCli\Lumen\RestartCommand());
+$application->add(new Ney\SwooleCli\Lumen\ReloadCommand());
+
+$application->run();
