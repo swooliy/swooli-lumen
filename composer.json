@@ -1,5 +1,5 @@
 {
-    "name": "ney/swoole-cli",
+    "name": "ney/swoolecli",
     "description": "Swoole CLI Tool",
     "type": "project",
     "license": "MIT",

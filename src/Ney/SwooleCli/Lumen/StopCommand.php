@@ -43,7 +43,7 @@ class StopCommand extends Command
             return;
         }
 
-        system("kill -SIGTERM {$pid}");
+        system("kill -9 {$pid}");
 
         file_put_contents($pidFilePath, "");
 

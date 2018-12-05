@@ -3,7 +3,7 @@ Swoole-Cli
 
 Swoole CLI Tool.
 
-Provide a standalone and faster web server runtime using swoole to launch the tradtional 
+Provide a standalone and faster web server runtime using swoole to launch the traditional 
 
 php web server framework, such as lumen, laravel, slim, slix, sympfony, thinkphp, yii, ci,
 

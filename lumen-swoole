@@ -10,7 +10,7 @@ use Symfony\Component\Console\Application;
 
 $application = new Application('swoole-cli', '0.0.1');
 
-// ... register commands
+// register commands
 
 $application->add(new Ney\SwooleCli\Lumen\StartCommand());
 $application->add(new Ney\SwooleCli\Lumen\StopCommand());
