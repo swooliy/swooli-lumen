@@ -1,6 +1,6 @@
 {
-    "name": "ney/swoolecli",
-    "description": "Swoole CLI Tool",
+    "name": "swooliy/swooliy-lumen",
+    "description": "Swoole CLI Tool for lumen server",
     "type": "project",
     "license": "MIT",
     "minimum-stability": "dev",
@@ -8,12 +8,9 @@
         "symfony/console": "*",
         "symfony/process": "^4.2@dev"    
     },
-    "bin": [
-        "swoole-cli"
-    ],
     "autoload": {
         "psr-4": {
-            "Ney\\SwooleCli\\": "./src/Ney/SwooleCli"
+            "Swooliy\\Lumen\\": "./src/Swooliy/Lumen/"
         }
     }
 }

@@ -1,16 +1,7 @@
-Swoole-Cli
+Swooliy-Lumen
 ==============
 
-Swoole CLI Tool.
+Swoole CLI Tool for Lumen server.
 
-Provide a standalone and faster web server runtime using swoole to launch the traditional 
-
-php web server framework, such as lumen, laravel, slim, slix, sympfony, thinkphp, yii, ci,
-
-cakephp, phalcon, wordpress, etc.
-
-Also we want to build php-fast runtime to implements the serveless architecture。
-
-https://www.kubernetes.org.cn/2523.html
 
 
