@@ -22,12 +22,6 @@ class SwooliyServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes(
-            [
-                __DIR__.'/../../../config/swooliy.php' => base_path('config/swooliy.php'),
-            ]
-        );
-
         if ($this->app->runningInConsole()) {
             $this->commands(
                 [
@@ -35,6 +29,7 @@ class SwooliyServiceProvider extends ServiceProvider
                     StopLumenCommand::class,
                     ReloadLumenCommand::class,
                     RestartLumenCommand::class,
+                    ConfigCommand::class,
                 ]
             );
         };
