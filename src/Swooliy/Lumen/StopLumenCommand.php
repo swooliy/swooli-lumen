@@ -4,6 +4,15 @@ namespace Swooliy\Lumen;
 
 use Illuminate\Console\Command;
 
+/**
+ * Stop lumen server
+ * 
+ * @category Artisan_Command
+ * @package  Swooliy\Lumen
+ * @author   ney <zoobile@gamail.com>
+ * @license  MIT 
+ * @link     https://github.com/swooliy/lumen
+ */
 class StopLumenCommand extends Command
 {
     /**
@@ -28,7 +37,6 @@ class StopLumenCommand extends Command
     public function handle()
     {
         try {
-
             $pidFilePath = base_path("storage/logs/pid");
 
             if (!file_exists($pidFilePath)) {
@@ -46,11 +54,8 @@ class StopLumenCommand extends Command
             file_put_contents($pidFilePath, "");
 
             $this->info("The server is stopped!");
-
         } catch (\Throwable $e) {
-
             die($e);
-        
         }
 
     }

@@ -2,8 +2,19 @@
 
 namespace Swooliy\Lumen;
 
+use \Illuminate\Http\Request;
 use Illuminate\Console\Command;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
+/**
+ * Start lumen server
+ * 
+ * @category Artisan_Command
+ * @package  Swooliy\Lumen
+ * @author   ney <zoobile@gamail.com>
+ * @license  MIT 
+ * @link     https://github.com/swooliy/lumen
+ */
 class StartLumenCommand extends Command
 {
     /**
@@ -17,7 +28,7 @@ class StartLumenCommand extends Command
                                 {--port=13140 : server port},
                                 {--daemon : server running in daemon mode}
                                 {--worknum=2 : server worker number}
-                                {--taskworknum=0 : server task worker num}
+                                {--tasknum=0 : server task worker num}
                             ';
 
     /**
@@ -38,109 +49,126 @@ class StartLumenCommand extends Command
             $host = $this->option('host');
             $port = $this->option('port');
             $name = $this->option('name');
-    
+
             if (!class_exists('\swoole_http_server')) {
                 $this->error("The command need php extension swoole");
                 return;
             }
-    
+
             $http = new \swoole_http_server($host, $port);
-    
+
             $http->memory = [];
-        
-            $http->on("start", function ($server) use ($host, $port, $name) {
-    
-                $this->info("{$name} server is starting at http://{$host}:{$port} on swoole");
-    
-                swoole_set_process_name("{$name}-master");
-    
-            });
-    
-            $http->on("managerStart", function ($server) use ($name) {
-    
-                swoole_set_process_name("{$name}-manager");
-    
-            });
-    
-            $http->on("workerStart", function ($server, $workerId) use ($name, $http) {
-        
-                swoole_set_process_name("{$name}-worker-{$workerId}");
 
-                var_dump(base_path("bootstrap/app.php"));
-
-                var_dump(getcwd());
-
-                $server->app = require_once base_path("bootstrap/app.php");
-    
-            });
-    
-            $http->on("request", function ($swooleRequest, $swooleResponse) use ($http) {
-                if ($swooleRequest->server['request_method'] == 'GET') {
-                    if (count($swooleRequest->get) > 0) {
-                        $queryString = http_build_query(array_except($swooleRequest->get, ['timestamp', 'sign']));
-                        $cacheKey    = $swooleRequest->server['request_uri'] . '?' . $queryString;
-                    } else {
-                        $cacheKey = $swooleRequest->server['request_uri'];
-                    }
-    
-                    if (isset($http->memory[$cacheKey])) {
-                        var_dump("hit");
-                        $response = $http->memory[$cacheKey];
-                        $response->header("Content-Type", "application/json");
-                        $swooleResponse->status($response->getStatusCode());
-                        $swooleResponse->end($response->getContent());
-                        return;
+            $http->on(
+                "start",
+                function ($server) use ($host, $port, $name) {
+                    $this->info("{$name} server is starting at http://{$host}:{$port} on swoole");
+                    
+                    // In MacOS, swoole can't set the process name
+                    if (PHP_OS != 'Darwin') {
+                        swoole_set_process_name("{$name}-master");
                     }
                 }
-    
-                if ($swooleRequest->server) {
-                    foreach ($swooleRequest->server as $key => $value) {
-                        $_SERVER[strtoupper($key)] = $value;
+            );
+
+            $http->on(
+                "managerStart",
+                function ($server) use ($name) {
+                    // In MacOS, swoole can't set the process name
+                    if (PHP_OS != 'Darwin') {
+                        swoole_set_process_name("{$name}-manager");
                     }
                 }
-    
-                $_GET    = $swooleRequest->get ?? [];
-                $_POST   = $swooleRequest->post ?? [];
-                $_COOKIE = $swooleRequest->cookie ?? [];
-                $_FILES  = $swooleRequest->files ?? [];
-    
-                $response = $http->app->handle(\Illuminate\Http\Request::capture());
-    
-                if ($swooleRequest->server['request_method'] == 'GET') {
-                    var_dump("cached");
-                    $http->memory[$cacheKey] = $response;
-                }
-    
-                $response->header("Content-Type",  $response->header["Content-Type"] ?? "application/json");
-                $swooleResponse->status($response->getStatusCode());
-                $swooleResponse->end($response->getContent());
-    
-            });
+            );
 
-            $http->set([
-                'daemonize'       => $this->option('daemon'),
-                "worker_num"      => (int) $this->option('worknum'),
-                'task_worker_num' => (int) $this->option('taskworknum'),
-                'log_file'        => base_path("storage/logs/swoole.log"),
-                'pid_file'        => base_path("storage/logs/pid"),
-                // if the system open files setting is 65536(show using `ulimit -a`), can reseting it by `ulimit -n 10000000`
-                'max_conn'        => 10000,
-            ]);
+            $http->on(
+                "workerStart",
+                function ($server, $workerId) use ($name, $http) {
+                    // In MacOS, swoole can't set the process name
+                    if (PHP_OS != 'Darwin') {
+                        swoole_set_process_name("{$name}-worker-{$workerId}");
+                    }
+
+                    $app = require base_path("bootstrap/app.php");
+
+                    $server->app = $app;
+                }
+            );
+
+            $http->on(
+                "request",
+                function ($swRequest, $swResponse) use ($http) {
+                    if ($swRequest->server['request_method'] == 'GET') {
+                        if (isset($swRequest->get) && count($swRequest->get) > 0) {
+                            $queryFields = array_except(
+                                $swRequest->get, [
+                                    'timestamp', 
+                                    'sign'
+                                ]
+                            );
+                            $qStr = http_build_query($queryFields);
+                            $cacheKey = $swRequest->server['request_uri'].'?'.$qStr;
+                        } else {
+                            $cacheKey = $swRequest->server['request_uri'];
+                        }
+
+                        if (isset($http->memory[$cacheKey])) {
+                            var_dump("hit");
+                            $response = $http->memory[$cacheKey];
+                            $contentType = $response->header["Content-Type"] ?? "application/json";
+                            $swResponse->header("Content-Type", $contentType);
+                            $swResponse->status($response->getStatusCode());
+                            $swResponse->end($response->getContent());
+                            return;
+                        }
+                    }
+
+                    if ($swRequest->server) {
+                        foreach ($swRequest->server as $key => $value) {
+                            $_SERVER[strtoupper($key)] = $value;
+                        }
+                    }
+
+                    $_GET = $swRequest->get ?? [];
+                    $_POST = $swRequest->post ?? [];
+                    $_COOKIE = $swRequest->cookie ?? [];
+                    $_FILES = $swRequest->files ?? [];
+
+                    $response = $http->app->handle(Request::capture());
+
+                    if ($swRequest->server['request_method'] == 'GET') {
+                        var_dump("cached");
+                        $http->memory[$cacheKey] = $response;
+                    }
+
+                    $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
+                    $swResponse->status($response->getStatusCode());
+                    $swResponse->end($response->getContent());
+                }
+            );
+
+            $http->set(
+                [
+                    'daemonize' => $this->option('daemon'),
+                    "worker_num" => (int)$this->option('worknum'),
+                    'task_worker_num' => (int)$this->option('tasknum'),
+                    'log_file' => base_path("storage/logs/swoole.log"),
+                    'pid_file' => base_path("storage/logs/pid"),
+                    // if the system open files setting is 65536(show using `ulimit -a`), can reseting it by `ulimit -n 10000000`
+                    'max_conn' => 10000,
+                ]
+            );
 
             $options = [];
-
-            foreach($this->options() as $key => $value) {
+            foreach ($this->options() as $key => $value) {
                 $options = array_add($options, '--' . $key, $value);
             }
-
-            file_put_contents(base_path("storage/logs/params"), json_encode($options));
+            $jsonOptions = json_encode($options);
+            file_put_contents(base_path("storage/logs/params"), $jsonOptions);
 
             $http->start();
-
         } catch (\Throwable $e) {
             die($e);
         }
-       
-
     }
 }

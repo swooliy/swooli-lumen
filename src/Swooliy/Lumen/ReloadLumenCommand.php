@@ -2,8 +2,18 @@
 
 namespace Swooliy\Lumen;
 
+use Throwable;
 use Illuminate\Console\Command;
 
+/**
+ * Reload lumen server
+ * 
+ * @category Artisan_Command
+ * @package  Swooliy\Lumen
+ * @author   ney <zoobile@gamail.com>
+ * @license  MIT 
+ * @link     https://github.com/swooliy/lumen
+ */
 class ReloadLumenCommand extends Command
 {
     /**
@@ -28,7 +38,6 @@ class ReloadLumenCommand extends Command
     public function handle()
     {
         try {
-
             $pidFilePath = base_path("storage/logs/pid");
 
             if (!file_exists($pidFilePath)) {
@@ -44,11 +53,8 @@ class ReloadLumenCommand extends Command
             exec("kill -USR1 {$pid}");
 
             $this->info("The server is reloaded success!");
-
-        } catch (\Throwable $e) {
-
+        } catch (Throwable $e) {
             die($e);
-        
         }
 
     }

@@ -10,7 +10,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Swooliy\\Lumen\\": "./src/Swooliy/Lumen/"
+            "Swooliy\\Lumen\\": "/src/Swooliy/Lumen/"
         }
     }
 }
