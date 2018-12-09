@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  * @package  Swooliy\Lumen
  * @author   ney <zoobile@gamail.com>
  * @license  MIT 
- * @link     https://github.com/swooliy/lumen
+ * @link     https://github.com/swooliy/swooliy-lumen
  */
 class ReloadCommand extends Command
 {

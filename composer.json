@@ -5,6 +5,7 @@
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
+        "swooliy/server": "*",
         "symfony/console": "*",
         "symfony/process": "^4.2@dev"    
     },

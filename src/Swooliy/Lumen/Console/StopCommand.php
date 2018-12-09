@@ -2,6 +2,7 @@
 
 namespace Swooliy\Lumen\Console;
 
+use Throwable;
 use Illuminate\Console\Command;
 
 /**
@@ -27,7 +28,7 @@ class StopCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Stop lumen server by swooliy, php artisan swooliy:stop';
+    protected $description = 'Stop lumen server by swooliy';
 
     /**
      * Execute the console command.
@@ -54,7 +55,7 @@ class StopCommand extends Command
             file_put_contents($pidFilePath, "");
 
             $this->info("The server is stopped!");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             die($e);
         }
 

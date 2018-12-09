@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
  * @package  Swooliy\Lumen
  * @author   ney <zoobile@gamail.com>
  * @license  MIT 
- * @link     https://github.com/swooliy/lumen
+ * @link     https://github.com/swooliy/swooliy-lumen
  */
 class RestartCommand extends Command
 {
@@ -41,27 +41,8 @@ class RestartCommand extends Command
             $this->call("swooliy:stop");
 
             sleep(2);
-
-            if ($file = base_path("storage/logs/params")) {
-                $options = json_decode("", true);
-            }
             
-            if (!is_array($options) || count($options) === 0) {
-                Artisan::call("swooliy:start");
-                return;
-            }
-
-            $needOptionName = [
-                '--name', 
-                '--host', 
-                '--port', 
-                '--daemon', 
-                '--worknum', 
-                '--tasknum'
-            ];
-            $options = array_only($options, $needOptionName);
-            
-            $this->call("swooliy:start", $options);
+            $this->call("swooliy:start");
         } catch (Throwable $e) {
             die($e);
         }

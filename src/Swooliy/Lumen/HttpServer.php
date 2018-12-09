@@ -4,6 +4,7 @@ namespace Swooliy\Lumen;
 
 use Exception;
 use Illuminate\Http\Request;
+use Swooliy\Server\AbstractHttpServer;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
