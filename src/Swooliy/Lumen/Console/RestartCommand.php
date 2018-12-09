@@ -1,6 +1,6 @@
 <?php
 
-namespace Swooliy\Lumen;
+namespace Swooliy\Lumen\Console;
 
 use Throwable;
 use Illuminate\Console\Command;

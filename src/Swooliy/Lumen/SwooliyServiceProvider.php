@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Swooliy\Lumen;
 
@@ -11,9 +11,9 @@ use Illuminate\Support\ServiceProvider;
  * @package  Swooliy\Lumen
  * @author   ney <zoobile@gamail.com>
  * @license  MIT 
- * @link     https://github.com/swooliy/lumen
+ * @link     https://github.com/swooliy/swooliy-lumen
  */
-class SwooliyServiceProvider extends ServiceProvider 
+class SwooliyServiceProvider extends ServiceProvider
 {
     /**
      * Boot function for lumen service provider
@@ -25,11 +25,11 @@ class SwooliyServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands(
                 [
-                    StartCommand::class,
-                    StopCommand::class,
-                    ReloadCommand::class,
-                    RestartCommand::class,
-                    ConfigCommand::class,
+                    Console\StartCommand::class,
+                    Console\StopCommand::class,
+                    Console\ReloadCommand::class,
+                    Console\RestartCommand::class,
+                    Console\ConfigCommand::class,
                 ]
             );
         };
