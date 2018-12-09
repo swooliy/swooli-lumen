@@ -50,7 +50,7 @@ class StopCommand extends Command
                 return;
             }
 
-            exec("kill {$pid}");
+            exec("kill -15 {$pid}");
 
             file_put_contents($pidFilePath, "");
 

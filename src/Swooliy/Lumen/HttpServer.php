@@ -55,6 +55,8 @@ END;
         $this->options = config('swooliy.server.options');
 
         parent::__construct($this->host, $this->port, $this->options);
+
+        $this->server->memory = [];
     }
 
     /**
@@ -163,5 +165,58 @@ END;
         $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
         $swResponse->status($response->getStatusCode());
         $swResponse->end($response->getContent());
+    }
+
+     /**
+     * Callback when swoole http server shutdown.
+     *
+     * @param Swoole\Http\Server $server swoole server instance
+     * 
+     * @return void
+     */
+    public function onShutdown($server)
+    {
+        echo "The server has shutdown.\n";
+    }
+
+    /**
+     * Callback when swoole http server's worker process stopped.
+     *
+     * @param Swoole\Http\Server $server   swoole server instance
+     * @param int                $workerId the order number of the worker process
+     * 
+     * @return void
+     */
+    public function onWorkerStopped($server, $workerId)
+    {
+        echo "The worker-{$workerId} has stopped.\n";
+    }
+
+    /**
+     * Callback when swoole http server's worker process happen error.
+     *
+     * @param Swoole\Http\Server $server    swoole server instance
+     * @param int                $workerId  the order number of the worker process
+     * @param int                $workerPid the pid of the worker process
+     * @param int                $exitCode  the status code return when the process exited
+     * @param int                $signal    the signal when the process exited
+     * 
+     * @return void
+     */
+    public function onWorkerError($server, $workerId, $workerPid, $exitCode, $signal)
+    {
+        echo "The worker-{$workerId} happend error, pid:{$workerPid}, exitCode:{$exitCode}, signal:{$signal}\n";
+    }
+
+    /**
+     * Callback when swoole http server's manager process stopped.
+     *
+     * @param Swoole\Http\Server $server swoole server instance
+     * 
+     * @return void
+     */
+    public function onManagerStopped($server)
+    {
+        echo "The manager process has stopped!\n";
     }
 }

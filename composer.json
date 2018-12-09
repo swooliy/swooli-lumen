@@ -1,13 +1,26 @@
 {
     "name": "swooliy/swooliy-lumen",
     "description": "Swoole CLI Tool for lumen server",
-    "type": "project",
+    "keywords": [
+        "package",
+        "lumen",
+        "artisan",
+        "console command",
+        "swoole",
+        "fast api service"
+    ],
+    "type": "package",
     "license": "MIT",
-    "minimum-stability": "dev",
+    "authors": [
+        {
+            "name": "Ney Chang",
+            "email": "zoobile@gmail.com",
+            "homepage": "https://github.com/zairl23"
+        }
+    ],
     "require": {
-        "swooliy/server": "*",
-        "symfony/console": "*",
-        "symfony/process": "^4.2@dev"    
+        "ext-swoole": "*",
+        "swooliy/server": "*"   
     },
     "autoload": {
         "psr-4": {
