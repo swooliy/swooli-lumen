@@ -22,14 +22,7 @@ class StartLumenCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'swooliy:start
-                                {--name=lumen : server name}
-                                {--host=0.0.0.0 : server host}
-                                {--port=13140 : server port},
-                                {--daemon : server running in daemon mode}
-                                {--worknum=2 : server worker number}
-                                {--tasknum=0 : server task worker num}
-                            ';
+    protected $signature = 'swooliy:start';
 
     /**
      * The console command description.
@@ -46,14 +39,34 @@ class StartLumenCommand extends Command
     public function handle()
     {
         try {
-            $host = $this->option('host');
-            $port = $this->option('port');
-            $name = $this->option('name');
-
             if (!class_exists('\swoole_http_server')) {
                 $this->error("The command need php extension swoole");
                 return;
             }
+
+            if (!file_exists(base_path('config/swooliy.php'))) {
+                $erroInfo = <<<END
+Swooliy config file not created!
+you should run php artisan swooliy:config
+END;
+                $this->error($erroInfo);
+                return;
+            }
+
+            if (!(config('swooliy'))) {
+                $erroInfo = <<<END
+Swooliy config not add!
+You should add 
+\$app->configure('swooliy');
+in bootstrap/app.php
+END;
+                $this->error($erroInfo);
+                return;
+            }
+
+            $host = config('swooliy.server.host');
+            $port = config('swooliy.server.port');
+            $name = config('swooliy.server.name');
 
             $http = new \swoole_http_server($host, $port);
 
@@ -147,17 +160,7 @@ class StartLumenCommand extends Command
                 }
             );
 
-            $http->set(
-                [
-                    'daemonize' => $this->option('daemon'),
-                    "worker_num" => (int)$this->option('worknum'),
-                    'task_worker_num' => (int)$this->option('tasknum'),
-                    'log_file' => base_path("storage/logs/swoole.log"),
-                    'pid_file' => base_path("storage/logs/pid"),
-                    // if the system open files setting is 65536(show using `ulimit -a`), can reseting it by `ulimit -n 10000000`
-                    'max_conn' => 10000,
-                ]
-            );
+            $http->set(config('swooliy.server.options'));
 
             $options = [];
             foreach ($this->options() as $key => $value) {
