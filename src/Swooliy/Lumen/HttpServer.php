@@ -4,6 +4,7 @@ namespace Swooliy\Lumen;
 
 use Exception;
 use Illuminate\Http\Request;
+use Swooliy\MemoryCache\MemoryCache;
 use Swooliy\Server\AbstractHttpServer;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -56,7 +57,18 @@ END;
 
         parent::__construct($this->host, $this->port, $this->options);
 
-        $this->server->memory = [];
+
+        $this->initCache();
+    }
+
+    /**
+     * Init cache
+     *
+     * @return void
+     */
+    protected function initCache()
+    {
+        $this->server->memory = new MemoryCache(config('swooliy.cache.columns'));
     }
 
     /**
@@ -120,26 +132,20 @@ END;
     {
         if ($swRequest->server['request_method'] == 'GET') {
             if (isset($swRequest->get) && count($swRequest->get) > 0) {
-                $queryFields = array_except(
-                    $swRequest->get,
-                    [
-                        'timestamp',
-                        'sign'
-                    ]
-                );
+                $queryFields = array_except($swRequest->get, config("swooliy.cache.ingnore_fields"));
                 $qStr = http_build_query($queryFields);
                 $cacheKey = $swRequest->server['request_uri'] . '?' . $qStr;
             } else {
                 $cacheKey = $swRequest->server['request_uri'];
             }
 
-            if (isset($this->server->memory[$cacheKey])) {
+            if ($this->server->memory->has($cacheKey)) {
                 var_dump("hit");
-                $response = $this->server->memory[$cacheKey];
-                $contentType = $response->header["Content-Type"] ?? "application/json";
+                $response = $this->server->memory->get($cacheKey);
+                $contentType = $response['type'] ?? "application/json";
                 $swResponse->header("Content-Type", $contentType);
-                $swResponse->status($response->getStatusCode());
-                $swResponse->end($response->getContent());
+                $swResponse->status($response['code']);
+                $swResponse->end($response['content']);
                 return;
             }
         }
@@ -159,7 +165,13 @@ END;
 
         if ($swRequest->server['request_method'] == 'GET') {
             var_dump("cached");
-            $this->server->memory[$cacheKey] = $response;
+            $this->server->memory->set(
+                $cacheKey, [
+                    'code' => $response->getStatusCode(),
+                    'type' => $response->header['Content-Type'] ?? "application/json",
+                    'content' => $response->getContent(),
+                ]
+            );
         }
 
         $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");

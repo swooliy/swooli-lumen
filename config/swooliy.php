@@ -23,5 +23,19 @@ return [
     'cache' => [
         'ingore_apis' => ['/'],
         'ingore_fields' => ['timestamp', 'sign'],
+        'columns' => [
+            'code' => [
+                'type' => \Swoole\Table::TYPE_INT,
+                'size' => 4,
+            ],
+            'type' => [
+                'type' => \Swoole\Table::TYPE_STRING,
+                'size' => 30,
+            ],
+            'content' => [
+                'type' => \Swoole\Table::TYPE_STRING,
+                'size' => 5000,
+            ],
+        ]
     ],
 ];
