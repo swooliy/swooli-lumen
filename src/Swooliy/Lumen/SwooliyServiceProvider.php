@@ -25,10 +25,10 @@ class SwooliyServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands(
                 [
-                    StartLumenCommand::class,
-                    StopLumenCommand::class,
-                    ReloadLumenCommand::class,
-                    RestartLumenCommand::class,
+                    StartCommand::class,
+                    StopCommand::class,
+                    ReloadCommand::class,
+                    RestartCommand::class,
                     ConfigCommand::class,
                 ]
             );

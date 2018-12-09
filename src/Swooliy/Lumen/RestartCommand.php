@@ -14,7 +14,7 @@ use Illuminate\Console\Command;
  * @license  MIT 
  * @link     https://github.com/swooliy/lumen
  */
-class RestartLumenCommand extends Command
+class RestartCommand extends Command
 {
     /**
      * The name and signature of the console command.

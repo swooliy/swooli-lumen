@@ -2,11 +2,10 @@
 
 namespace Swooliy\Lumen;
 
-use Throwable;
 use Illuminate\Console\Command;
 
 /**
- * Reload lumen server
+ * Stop lumen server
  * 
  * @category Artisan_Command
  * @package  Swooliy\Lumen
@@ -14,21 +13,21 @@ use Illuminate\Console\Command;
  * @license  MIT 
  * @link     https://github.com/swooliy/lumen
  */
-class ReloadLumenCommand extends Command
+class StopCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'swooliy:reload';
+    protected $signature = 'swooliy:stop';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Reload lumen server by swooliy, php artisan swooliy:reload';
+    protected $description = 'Stop lumen server by swooliy, php artisan swooliy:stop';
 
     /**
      * Execute the console command.
@@ -50,10 +49,12 @@ class ReloadLumenCommand extends Command
                 return;
             }
 
-            exec("kill -USR1 {$pid}");
+            exec("kill {$pid}");
 
-            $this->info("The server is reloaded success!");
-        } catch (Throwable $e) {
+            file_put_contents($pidFilePath, "");
+
+            $this->info("The server is stopped!");
+        } catch (\Throwable $e) {
             die($e);
         }
 

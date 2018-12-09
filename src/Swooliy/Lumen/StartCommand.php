@@ -2,7 +2,7 @@
 
 namespace Swooliy\Lumen;
 
-use \Illuminate\Http\Request;
+use Illuminate\Http\Request;
 use Illuminate\Console\Command;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * @license  MIT 
  * @link     https://github.com/swooliy/lumen
  */
-class StartLumenCommand extends Command
+class StartCommand extends Command
 {
     /**
      * The name and signature of the console command.
