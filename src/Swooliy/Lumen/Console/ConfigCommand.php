@@ -38,7 +38,7 @@ class ConfigCommand extends Command
     public function handle()
     {
         try {
-            $sourceConfigPath = __DIR__ . "/../../../config/swooliy.php";
+            $sourceConfigPath = __DIR__ . "/../../../../config/swooliy.php";
             $targetConfigPath = base_path("config/swooliy.php");
 
             if (file_exists($targetConfigPath)) {

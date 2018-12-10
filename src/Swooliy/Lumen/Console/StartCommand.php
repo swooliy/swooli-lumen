@@ -37,11 +37,11 @@ class StartCommand extends Command
      * @return mixed
      */
     public function handle()
-    {
+    {       
         try {
             (new HttpServer())->start();
         } catch (Throwable $e) {
-            die($e);
+            $this->error($e->getMessage());
         }
     }
 }

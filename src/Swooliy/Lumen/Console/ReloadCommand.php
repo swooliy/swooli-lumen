@@ -28,7 +28,7 @@ class ReloadCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Reload lumen server by swooliy, php artisan swooliy:reload';
+    protected $description = 'Reload lumen server by swooliy';
 
     /**
      * Execute the console command.

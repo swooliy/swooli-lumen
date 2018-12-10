@@ -21,14 +21,17 @@ return [
 
     ],
     'cache' => [
-        'ingore_apis' => ['/'],
-        'ingore_fields' => ['timestamp', 'sign'],
+        'ingnore_apis' => [
+            '/',
+            '/favicon.ico',
+        ],
+        'ingnore_fields' => ['timestamp', 'sign', 'app_id'],
         'columns' => [
-            'code' => [
+            'status_code' => [
                 'type' => \Swoole\Table::TYPE_INT,
                 'size' => 4,
             ],
-            'type' => [
+            'content_type' => [
                 'type' => \Swoole\Table::TYPE_STRING,
                 'size' => 30,
             ],
