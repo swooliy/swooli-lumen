@@ -107,7 +107,7 @@ END;
             swoole_set_process_name("{$this->name}-worker-{$workerId}");
         }
 
-        $server->app = include base_path("bootstrap/app.php");
+        $this->server->app = include base_path("bootstrap/app.php");
 
     }
 
@@ -128,8 +128,6 @@ END;
 
         if ($response = $this->hasCache($swRequest)) {
             var_dump("hit");
-            // $contentType = $response['content_type'] ?? "application/json";
-            $swResponse->header("Content-Type", $contentType);
             $swResponse->status($response['status_code']);
             $swResponse->end($response['content']);
             return;
