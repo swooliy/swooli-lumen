@@ -20,8 +20,7 @@
     ],
     "require": {
         "ext-swoole": "*",
-        "swooliy/server": "*",
-        "swooliy/memory-cache": "*"
+        "swooliy/server": "*"
     },
     "autoload": {
         "psr-4": {

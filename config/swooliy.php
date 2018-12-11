@@ -83,7 +83,15 @@ return [
         ], 
 
     ],
+
+    /**
+     * Cache Setting
+     */
     'cache' => [
+
+        /**
+         * Api Cache Setting
+         */
         'apis' => [
             '/test' => [
                 'tags' => [],

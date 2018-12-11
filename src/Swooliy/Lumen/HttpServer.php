@@ -4,7 +4,6 @@ namespace Swooliy\Lumen;
 
 use Exception;
 use Illuminate\Http\Request;
-use Swooliy\Lumen\Concern\Cachable;
 use Swooliy\Server\AbstractHttpServer;
 use Illuminate\Support\Facades\Facade;
 use Swooliy\Lumen\Concern\InteractWithRequest;
@@ -20,7 +19,7 @@ use Swooliy\Lumen\Concern\InteractWithRequest;
  */
 class HttpServer extends AbstractHttpServer
 {
-    use Cachable, InteractWithRequest;
+    use InteractWithRequest;
 
     protected $app;
 
@@ -62,7 +61,6 @@ END;
 
         parent::__construct($this->host, $this->port, $this->options);
 
-        $this->initCache();
     }
 
     /**
@@ -151,27 +149,13 @@ END;
     public function onRequest($swRequest, $swResponse)
     {
         try {
-            // Too Slow in Mac?
             if (config('swooliy.server.options.enable_static_handler') == true && $this->handleStatic($swRequest, $swResponse)) {
-                return;
-            }
-
-            if ($response = $this->hasCache($swRequest)) {
-                var_dump("hit");
-                $swResponse->header("Content-Type", $response["content_type"] ?? "application/json");
-                $swResponse->status($response['status_code']);
-                $swResponse->end($response['content']);
                 return;
             }
 
             $this->initGlobalParams($swRequest);
 
             $response = $this->server->app->handle(Request::capture());
-
-            if ($this->canCache($swRequest) && ($response->getStatusCode() == 200)) {
-                var_dump("cached");
-                $this->setCache($swRequest, $response);
-            }
 
             $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
             $swResponse->status($response->getStatusCode());
