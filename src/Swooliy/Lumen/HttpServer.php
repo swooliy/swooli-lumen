@@ -6,6 +6,8 @@ use Exception;
 use Illuminate\Http\Request;
 use Swooliy\Lumen\Concern\Cachable;
 use Swooliy\Server\AbstractHttpServer;
+use Illuminate\Support\Facades\Facade;
+use Swooliy\Lumen\Concern\InteractWithRequest;
 
 /**
  * Http Server  base on Swoole Http Server
@@ -18,7 +20,9 @@ use Swooliy\Server\AbstractHttpServer;
  */
 class HttpServer extends AbstractHttpServer
 {
-    use Cachable;
+    use Cachable, InteractWithRequest;
+
+    protected $app;
 
     protected $host;
 
@@ -103,12 +107,37 @@ END;
      */
     public function onWorkerStarted($server, $workerId)
     {
+        $this->clearCache();
+
         if (PHP_OS != 'Darwin') {
             swoole_set_process_name("{$this->name}-worker-{$workerId}");
         }
 
-        $this->server->app = include base_path("bootstrap/app.php");
+        // don't init laravel app in task workers
+        if ($server->taskworker) {
+            return;
+        }
 
+        $server->app = include base_path("bootstrap/app.php");
+
+        // clear events instance in case of repeated listeners in worker process
+        Facade::clearResolvedInstance('events');
+
+    }
+
+    /**
+     * Clear APC or OPCache.
+     * 
+     * @return void
+     */
+    protected function clearCache()
+    {
+        if (function_exists('apc_clear_cache')) {
+            apc_clear_cache();
+        }
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
     }
 
     /**
@@ -121,39 +150,37 @@ END;
      */
     public function onRequest($swRequest, $swResponse)
     {
-
-        $data = $this->server->app['router'];
-
-        file_put_contents(base_path("storage/logs/test"), $data);
-
-        if ($response = $this->hasCache($swRequest)) {
-            var_dump("hit");
-            $swResponse->status($response['status_code']);
-            $swResponse->end($response['content']);
-            return;
-        }
-
-        if ($swRequest->server) {
-            foreach ($swRequest->server as $key => $value) {
-                $_SERVER[strtoupper($key)] = $value;
+        try {
+            if (config('swooliy.server.options.enable_static_handler') == true && $this->handleStatic($swRequest, $swResponse)) {
+                return;
             }
+
+            var_dump("request");
+
+            if ($response = $this->hasCache($swRequest)) {
+                var_dump("hit");
+                $swResponse->header("Content-Type", $response["content_type"] ?? "application/json");
+                $swResponse->status($response['status_code']);
+                $swResponse->end($response['content']);
+                return;
+            }
+
+            $this->initGlobalParams($swRequest);
+
+            $response = $this->server->app->handle(Request::capture());
+
+            if ($this->canCache($swRequest) && ($response->getStatusCode() == 200)) {
+                var_dump("cached");
+                $this->setCache($swRequest, $response);
+            }
+
+            $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
+            $swResponse->status($response->getStatusCode());
+            $swResponse->end($response->getContent());
+        } catch (Throwable $e) {
+            // todo
         }
-
-        $_GET    = $swRequest->get ?? [];
-        $_POST   = $swRequest->post ?? [];
-        $_COOKIE = $swRequest->cookie ?? [];
-        $_FILES  = $swRequest->files ?? [];
-
-        $response = $this->server->app->handle(Request::capture());
-
-        if ($this->canCache($swRequest) && ($response->getStatusCode() == 200)) {
-            var_dump("cached");
-            $this->setCache($swRequest, $response);
-        }
-
-        // $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
-        $swResponse->status($response->getStatusCode());
-        $swResponse->end($response->getContent());
+       
     }
 
     /**

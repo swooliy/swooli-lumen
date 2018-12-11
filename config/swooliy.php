@@ -67,6 +67,8 @@ return [
             'max_request' => 0,
             // 'open_cpu_affinity' => 1,
             // 'dispatch_mode' => env('', 2),
+            'document_root' => base_path("public"),
+            'enable_static_handler' => false,
         ],
 
     ],
