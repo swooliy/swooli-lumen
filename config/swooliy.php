@@ -37,7 +37,7 @@ return [
             /**
              * Whether the server running in daemon mode or not
              */
-            'daemonize' => env('', 0),
+            'daemonize' => env('', 1),
 
             /**
              * Which file the log put in
@@ -64,32 +64,30 @@ return [
              * Maximun count when the worker process will restart
              * Default:0, never restart
              */
-            'max_request' => 0,
-            // 'open_cpu_affinity' => 1,
-            // 'dispatch_mode' => env('', 2),
+            'max_request' => 1000,
+
+            /**
+             * The model of dispatch
+             */
+            'dispatch_mode' => env('', 2),
+            
+            /**
+             * Static File Directory
+             */
             'document_root' => base_path("public"),
-            'enable_static_handler' => false,
-        ],
+
+            /**
+             * Whether use swoole to handle static files
+             */
+            'enable_static_handler' => true,
+        ], 
 
     ],
     'cache' => [
-        'ingnore_apis' => [
-            '/',
-            '/favicon.ico',
-        ],
-        'ingnore_fields' => ['timestamp', 'sign', 'app_id'],
-        'columns' => [
-            'status_code' => [
-                'type' => \Swoole\Table::TYPE_INT,
-                'size' => 4,
-            ],
-            'content_type' => [
-                'type' => \Swoole\Table::TYPE_STRING,
-                'size' => 30,
-            ],
-            'content' => [
-                'type' => \Swoole\Table::TYPE_STRING,
-                'size' => 5000,
+        'apis' => [
+            '/test' => [
+                'tags' => [],
+                'fields' => [],
             ],
         ],
     ],

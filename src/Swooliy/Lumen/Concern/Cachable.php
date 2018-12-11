@@ -2,8 +2,6 @@
 
 namespace Swooliy\Lumen\Concern;
 
-use Swooliy\MemoryCache\MemoryCache;
-
 /**
  * Http Server  base on Swoole Http Server
  *
@@ -19,7 +17,7 @@ trait Cachable
     /**
      * Cache instance
      *
-     * @var Swooliy\MmemoryCache\MemoryCache
+     * @var Illuminate\Cache
      */
     protected $cache;
 
@@ -36,78 +34,63 @@ trait Cachable
     /**
      * Can cache
      *
-     * @param Swoole\Http\Request $request current request from swoole
+     * @param Swoole\Http\Request $swRequest current request from swoole
      *
      * @return boolean
      */
-    protected function canCache($request)
+    protected function canCache($swRequest)
     {
-        return $request->server['request_method'] == 'GET' &&
-        !in_array($request->server['request_uri'], config('swooliy.cache.ingnore_apis'));
-    }
-
-    /**
-     * Set Cache
-     *
-     * @param Swoole\Http\Request      $request  current request from swoole
-     * @param Illumunate\Http\Response $response current response from lumen
-     *
-     * @return void
-     */
-    protected function setCache($request, $response)
-    {
-        $this->cache->set(
-            $this->getCacheKey($request),
-            [
-                'status_code'  => $response->getStatusCode(),
-                'content_type' => $response->header['Content-Type'] ?? "application/json",
-                'content'      => $response->getContent(),
-            ]
-        );
+        return $swRequest->server['request_method'] == 'GET' &&
+        isset(config('swooliy.cache.apis')[$swRequest->server['request_uri']]);
     }
 
     /**
      * Has cache
      *
-     * @param Swoole\Http\Request $request current request from swoole
+     * @param Swoole\Http\Request $swRequest current request from swoole
      *
-     * @return boolean
+     * @return boolean|json
      */
-    protected function hasCache($request)
+    protected function hasCache($swRequest)
     {
-        if (!$this->canCache($request)) {
+        if (!$this->canCache($swRequest)) {
             return false;
         }
 
-        $key = $this->getCacheKey($request);
+        $key = $this->getCacheKey($swRequest);
 
-        return $this->cache->get($key);
+        if ($key) {
+            return $this->cache->tags($key['tags'])->get($key['key']);
+        }
 
     }
 
     /**
      * Get cache key from current request
      *
-     * @param Swoole\Http\Request $request current request from swoole
+     * @param Swoole\Http\Request $swRequest current request from swoole
      *
      * @return string
      */
-    protected function getCacheKey($request)
+    protected function getCacheKey($swRequest)
     {
-        $uri = $request->server['request_uri'];
+        $uri = $swRequest->server['request_uri'];
 
-        if (isset($request->get) && count($request->get) > 0) {
-            $queryFields = array_except(
+        if (isset(config("swooliy.cache.apis")[$uri])) {
+            $info = config("swooliy.cache.apis")[$uri];
+
+            $queryFields = array_only(
                 $request->get,
-                config("swooliy.cache.ingnore_fields")
+                $info['fields']
             );
 
             $qStr     = http_build_query($queryFields);
-            $cacheKey = $uri . '?' . $qStr;
-        } else {
-            $cacheKey = $uri;
+            $key  = $uri . '?' . $qStr;
+            $tags = $info['tags'];
+
+            return compact('key', 'tags');
+            
         }
 
-        return $cacheKey;
     }
 }
