@@ -17,7 +17,7 @@ trait InteractWithRequest
     /**
      * Handle static files
      *
-     * @param Swoole\Http\Request  $swRequest  current  swoole request instance
+     * @param Swoole\Http\Request  $swRequest  current swoole request instance
      * @param Swoole\Http\Response $swResponse current swoole response instance
      *
      * @return void|bool
@@ -41,8 +41,7 @@ trait InteractWithRequest
         // Need fileinfo extension
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime  = finfo_file($finfo, $filename);
-        // $mime = \mime_content_type($filename);
-
+        //$mime = \mime_content_type($filename);
         if ($extension === 'js') {
             $mime = 'text/javascript';
         } elseif ($extension === 'css') {

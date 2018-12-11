@@ -113,7 +113,7 @@ END;
             swoole_set_process_name("{$this->name}-worker-{$workerId}");
         }
 
-        // don't init laravel app in task workers
+        // don't bootstrap lumen app in task workers
         if ($server->taskworker) {
             return;
         }
@@ -151,11 +151,10 @@ END;
     public function onRequest($swRequest, $swResponse)
     {
         try {
+            // Too Slow in Mac?
             if (config('swooliy.server.options.enable_static_handler') == true && $this->handleStatic($swRequest, $swResponse)) {
                 return;
             }
-
-            var_dump("request");
 
             if ($response = $this->hasCache($swRequest)) {
                 var_dump("hit");
@@ -178,7 +177,19 @@ END;
             $swResponse->status($response->getStatusCode());
             $swResponse->end($response->getContent());
         } catch (Throwable $e) {
-            // todo
+            $error = sprintf(
+                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s', 
+                get_class($e), 
+                $e->getCode(), 
+                $e->getMessage(), 
+                $e->getFile(), 
+                $e->getLine(), PHP_EOL, 
+                $e->getTraceAsString()
+            );
+            var_dump($error);
+            
+            $response->status(500);
+            $response->end('Oops! An unexpected error occurred: ' . $e->getMessage());
         }
        
     }
