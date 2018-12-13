@@ -4,6 +4,7 @@ namespace Swooliy\Lumen\Console;
 
 use Throwable;
 use Swooliy\Lumen\HttpServer;
+use Laravel\Lumen\Application;
 use Illuminate\Console\Command;
 
 /**
@@ -11,7 +12,7 @@ use Illuminate\Console\Command;
  * 
  * @category Artisan_Command
  * @package  Swooliy\Lumen
- * @author   ney <zoobile@gamail.com>
+ * @author   ney <zoobile@gmail.com>
  * @license  MIT 
  * @link     https://github.com/swooliy/swooliy-lumen
  */
@@ -36,10 +37,10 @@ class StartCommand extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle(Application $app)
     {       
         try {
-            (new HttpServer())->start();
+            (new HttpServer($app))->start();
         } catch (Throwable $e) {
             $this->error($e->getMessage());
         }

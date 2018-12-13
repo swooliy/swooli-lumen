@@ -7,7 +7,7 @@ namespace Swooliy\Lumen\Concern;
  *
  * @category Http_Request_Functions
  * @package  Swooliy\Lumen
- * @author   ney <zoobile@gamail.com>
+ * @author   ney <zoobile@gmail.com>
  * @license  MIT https://github.com/swooliy/swooliy-lumen/LICENSE.md
  * @link     https://github.com/swooliy/swooliy-lumen
  */

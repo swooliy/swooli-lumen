@@ -4,9 +4,10 @@ namespace Swooliy\Lumen;
 
 use Exception;
 use Illuminate\Http\Request;
-use Swooliy\Server\AbstractHttpServer;
 use Illuminate\Support\Facades\Facade;
+use Swooliy\Lumen\Concern\Cachable;
 use Swooliy\Lumen\Concern\InteractWithRequest;
+use Swooliy\Server\AbstractHttpServer;
 
 /**
  * Http Server  base on Swoole Http Server
@@ -19,7 +20,7 @@ use Swooliy\Lumen\Concern\InteractWithRequest;
  */
 class HttpServer extends AbstractHttpServer
 {
-    use InteractWithRequest;
+    use Cachable, InteractWithRequest;
 
     protected $app;
 
@@ -34,7 +35,7 @@ class HttpServer extends AbstractHttpServer
     /**
      * Construct for HttpServer class
      */
-    public function __construct()
+    public function __construct($app)
     {
         if (!file_exists(base_path('config/swooliy.php'))) {
             $erroInfo = <<<END
@@ -54,12 +55,16 @@ END;
             throw new Exception($errInfo);
         }
 
+        $this->app = $app;
+
         $this->host    = config('swooliy.server.host');
         $this->port    = config('swooliy.server.port');
         $this->name    = config('swooliy.server.name');
         $this->options = config('swooliy.server.options');
 
         parent::__construct($this->host, $this->port, $this->options);
+
+        $this->initCache();
 
     }
 
@@ -125,7 +130,7 @@ END;
 
     /**
      * Clear APC or OPCache.
-     * 
+     *
      * @return void
      */
     protected function clearCache()
@@ -153,6 +158,14 @@ END;
                 return;
             }
 
+            if (config('swooliy.cache.switch') == 1 && $response = $this->hasCache($swRequest)) {
+                var_dump("cache hit in swoole level");
+                $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
+                $swResponse->status($response->getStatusCode());
+                $swResponse->end($response->getContent());
+                return;
+            }
+
             $this->initGlobalParams($swRequest);
 
             $response = $this->server->app->handle(Request::capture());
@@ -162,20 +175,20 @@ END;
             $swResponse->end($response->getContent());
         } catch (Throwable $e) {
             $error = sprintf(
-                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s', 
-                get_class($e), 
-                $e->getCode(), 
-                $e->getMessage(), 
-                $e->getFile(), 
-                $e->getLine(), PHP_EOL, 
+                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
+                get_class($e),
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(), PHP_EOL,
                 $e->getTraceAsString()
             );
             var_dump($error);
-            
+
             $response->status(500);
             $response->end('Oops! An unexpected error occurred: ' . $e->getMessage());
         }
-       
+
     }
 
     /**

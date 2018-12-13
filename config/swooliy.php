@@ -88,14 +88,13 @@ return [
      * Cache Setting
      */
     'cache' => [
-
-        /**
-         * Api Cache Setting
-         */
-        'apis' => [
-            '/test' => [
-                'tags' => [],
-                'fields' => [],
+        'cache' => [
+            'switch' => 1,
+            'apis' => [
+                '/test' => [
+                    'tags' => ['tag'],
+                    'fields' => ['field'],
+                ],
             ],
         ],
     ],
