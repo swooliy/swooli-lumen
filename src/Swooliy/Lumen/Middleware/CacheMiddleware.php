@@ -4,6 +4,8 @@ namespace Swooliy\Lumen\Middleware;
 
 use Cache;
 use Closure;
+use Exception;
+use Swooliy\Lumen\Concern\SerializeResponse;
 
 /**
  * Cache Midlleare for api response
@@ -16,22 +18,13 @@ use Closure;
  */
 class CacheMiddleware
 {
+    use SerializeResponse;
 
     protected $cacheTags = [];
 
     protected $cacheKey;
 
     protected $cacheFields = [];
-
-    /**
-     * Constructor
-     *
-     * @param ResponseSerializer $serializer Serializer of Response
-     */
-    public function __construct(ResponseSerializer $serializer)
-    {   
-        $this->serializer = $serializer;
-    }
 
     /**
      * Handle an incoming request.
@@ -63,10 +56,10 @@ class CacheMiddleware
             
             if ($data = Cache::tags($this->cacheTags)->has($this->cacheKey)) {
                 try {
-                    return $this->serializer->unserialize(
+                    return $this->unserialize(
                         Cache::tags($this->cacheTags)->get($this->cacheKey)
                     );
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return $next($request);
                 }   
             }
@@ -89,7 +82,7 @@ class CacheMiddleware
             if (!Cache::tags($this->cacheTags)->has($this->cacheKey)) {
                 Cache::tags($this->cacheTags)->forever(
                     $this->cacheKey, 
-                    $this->serializer->serialize($response)
+                    $this->serialize($response)
                 );
             }
         }
