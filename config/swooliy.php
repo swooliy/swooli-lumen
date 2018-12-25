@@ -88,14 +88,29 @@ return [
      * Cache Setting
      */
     'cache' => [
-        'cache' => [
-            'switch' => 1,
-            'apis' => [
-                '/test' => [
-                    'tags' => ['tag'],
-                    'fields' => ['field'],
-                ],
+        'switch' => 1,
+        'apis' => [
+            '/test' => [
+                'tags' => ['tag'],
+                'fields' => ['field'],
             ],
+        ],
+    ],
+
+    /**
+     * Wacher Setting
+     */
+    'watcher' => [
+        /**
+         * Whether open the auto-watch or not
+         */
+        'enable' => 0,
+
+        /**
+         * The files where watch.
+         */
+        'files' => [
+            base_path(),
         ],
     ],
 ];
