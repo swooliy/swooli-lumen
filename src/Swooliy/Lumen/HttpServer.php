@@ -265,4 +265,16 @@ END;
     {
         echo "The manager process has stopped!\n";
     }
+
+    /**
+     * Check the server is running or not
+     *
+     * @return boolean
+     */
+    public static function isRunning()
+    {
+        $pidFilePath = base_path("storage/logs/pid");
+        return file_exists($pidFilePath) && 
+            !empty(file_get_contents($pidFilePath));
+    }
 }
