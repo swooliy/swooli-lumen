@@ -219,6 +219,10 @@ END;
     public function onShutdown($server)
     {
         echo "The server has shutdown.\n";
+
+        $pidFilePath = base_path("storage/logs/pid");
+
+        file_put_contents($pidFilePath, "");
     }
 
     /**
