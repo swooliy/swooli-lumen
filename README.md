@@ -1,32 +1,20 @@
 Swooliy-Lumen
 ==============
 
-Swoole CLI Tool for Lumen Server.
+### Description
 
-### Deploy 
+A lumen package that uses swoole instead of php-fpm to manage and speed up the lumen application.
 
-Using [Supervisor](http://www.supervisord.org):
+### Features
 
-```shell
-[program:swooliy]
-process_name=swooliy
-command=php /project/artisan swooliy:start
-autostart=true
-autorestart=true
-user=www
-numprocs=1
-stdout_logfile=/tmp/swooliy.log
-```
+1. Easy start-stop service using artisan command.
 
-Start the server:
+1. Hot updates do not require restart services.
 
-```shell
-supervisorctl reload 
-supervisorctl start swooliy
-```
+1. Significantly increase service concurrency and qps.
 
-Restart the server:
-```
-supervisorctl restart swooliy
-```
-Notice: you must set the `swooliy.options.daemon = 0`.
+1. Supporting Cache Response.
+
+### Documentation
+
+Please visit [the doc](docs/README.md).
