@@ -1,6 +1,6 @@
 {
     "name": "swooliy/swooliy-lumen",
-    "description": "Swoole CLI Tool for lumen server",
+    "description": "A lumen package that uses swoole instead of php-fpm to manage and speed up the lumen application",
     "keywords": [
         "package",
         "lumen",
@@ -35,3 +35,4 @@
         }
     }
 }
+

@@ -5,7 +5,6 @@ namespace Swooliy\Lumen;
 use Illuminate\Support\ServiceProvider;
 use Swooliy\Lumen\Middleware\CacheMiddleware;
 
-
 /**
  * The Lumen Service Provider for swooliy-lumen
  * 
@@ -24,7 +23,6 @@ class SwooliyServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
         $this->app->singleton(CacheMiddleware::class);
 
         $this->app->routeMiddleware(
@@ -41,9 +39,9 @@ class SwooliyServiceProvider extends ServiceProvider
                     Console\ReloadCommand::class,
                     Console\RestartCommand::class,
                     Console\ConfigCommand::class,
+                    Console\WatchCommand::class,
                 ]
             );
         };
-
     }
 }

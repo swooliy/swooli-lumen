@@ -2,6 +2,8 @@
 
 namespace Swooliy\Lumen;
 
+use Error;
+use Throwable;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Facade;
@@ -166,9 +168,9 @@ END;
                 return;
             }
 
-            $this->initGlobalParams($swRequest);
+            $request = $this->makeIlluminateRequest($swRequest);
 
-            $response = $this->server->app->handle(Request::capture());
+            $response = $this->server->app->handle($request);
 
             $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
             $swResponse->status($response->getStatusCode());
@@ -183,10 +185,9 @@ END;
                 $e->getLine(), PHP_EOL,
                 $e->getTraceAsString()
             );
-            var_dump($error);
-
-            $response->status(500);
-            $response->end('Oops! An unexpected error occurred: ' . $e->getMessage());
+            print_r($error);
+            $swResponse->status(500);
+            $swResponse->end('Oops! An unexpected error occurred.');
         }
 
     }
@@ -201,6 +202,10 @@ END;
     public function onShutdown($server)
     {
         echo "The server has shutdown.\n";
+
+        $pidFilePath = base_path("storage/logs/pid");
+
+        file_put_contents($pidFilePath, "");
     }
 
     /**
@@ -242,5 +247,17 @@ END;
     public function onManagerStopped($server)
     {
         echo "The manager process has stopped!\n";
+    }
+
+    /**
+     * Check the server is running or not
+     *
+     * @return boolean
+     */
+    public static function isRunning()
+    {
+        $pidFilePath = base_path("storage/logs/pid");
+        return file_exists($pidFilePath) && 
+            !empty(file_get_contents($pidFilePath));
     }
 }
