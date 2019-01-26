@@ -2,19 +2,21 @@
 
 namespace Swooliy\Lumen;
 
+use Error;
+use Throwable;
 use Exception;
 use Illuminate\Http\Request;
-use Swooliy\Lumen\Concern\Cachable;
-use Swooliy\Server\AbstractHttpServer;
 use Illuminate\Support\Facades\Facade;
+use Swooliy\Lumen\Concern\Cachable;
 use Swooliy\Lumen\Concern\InteractWithRequest;
+use Swooliy\Server\AbstractHttpServer;
 
 /**
  * Http Server  base on Swoole Http Server
  *
  * @category Http_Server
  * @package  Swooliy\Lumen
- * @author   ney <zoobile@gamail.com>
+ * @author   ney <zoobile@gmail.com>
  * @license  MIT https://github.com/swooliy/swooliy-lumen/LICENSE.md
  * @link     https://github.com/swooliy/swooliy-lumen
  */
@@ -35,7 +37,7 @@ class HttpServer extends AbstractHttpServer
     /**
      * Construct for HttpServer class
      */
-    public function __construct()
+    public function __construct($app)
     {
         if (!file_exists(base_path('config/swooliy.php'))) {
             $erroInfo = <<<END
@@ -55,6 +57,8 @@ END;
             throw new Exception($errInfo);
         }
 
+        $this->app = $app;
+
         $this->host    = config('swooliy.server.host');
         $this->port    = config('swooliy.server.port');
         $this->name    = config('swooliy.server.name');
@@ -63,6 +67,7 @@ END;
         parent::__construct($this->host, $this->port, $this->options);
 
         $this->initCache();
+
     }
 
     /**
@@ -127,7 +132,7 @@ END;
 
     /**
      * Clear APC or OPCache.
-     * 
+     *
      * @return void
      */
     protected function clearCache()
@@ -151,47 +156,40 @@ END;
     public function onRequest($swRequest, $swResponse)
     {
         try {
-            // Too Slow in Mac?
             if (config('swooliy.server.options.enable_static_handler') == true && $this->handleStatic($swRequest, $swResponse)) {
                 return;
             }
 
-            if ($response = $this->hasCache($swRequest)) {
-                var_dump("hit");
-                $swResponse->header("Content-Type", $response["content_type"] ?? "application/json");
-                $swResponse->status($response['status_code']);
-                $swResponse->end($response['content']);
+            if (config('swooliy.cache.switch') == 1 && $response = $this->hasCache($swRequest)) {
+                var_dump("cache hit in swoole level");
+                $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
+                $swResponse->status($response->getStatusCode());
+                $swResponse->end($response->getContent());
                 return;
             }
 
-            $this->initGlobalParams($swRequest);
+            $request = $this->makeIlluminateRequest($swRequest);
 
-            $response = $this->server->app->handle(Request::capture());
-
-            if ($this->canCache($swRequest) && ($response->getStatusCode() == 200)) {
-                var_dump("cached");
-                $this->setCache($swRequest, $response);
-            }
+            $response = $this->server->app->handle($request);
 
             $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
             $swResponse->status($response->getStatusCode());
             $swResponse->end($response->getContent());
         } catch (Throwable $e) {
             $error = sprintf(
-                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s', 
-                get_class($e), 
-                $e->getCode(), 
-                $e->getMessage(), 
-                $e->getFile(), 
-                $e->getLine(), PHP_EOL, 
+                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
+                get_class($e),
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(), PHP_EOL,
                 $e->getTraceAsString()
             );
-            var_dump($error);
-            
-            $response->status(500);
-            $response->end('Oops! An unexpected error occurred: ' . $e->getMessage());
+            print_r($error);
+            $swResponse->status(500);
+            $swResponse->end('Oops! An unexpected error occurred.');
         }
-       
+
     }
 
     /**
@@ -204,6 +202,10 @@ END;
     public function onShutdown($server)
     {
         echo "The server has shutdown.\n";
+
+        $pidFilePath = base_path("storage/logs/pid");
+
+        file_put_contents($pidFilePath, "");
     }
 
     /**
@@ -245,5 +247,17 @@ END;
     public function onManagerStopped($server)
     {
         echo "The manager process has stopped!\n";
+    }
+
+    /**
+     * Check the server is running or not
+     *
+     * @return boolean
+     */
+    public static function isRunning()
+    {
+        $pidFilePath = base_path("storage/logs/pid");
+        return file_exists($pidFilePath) && 
+            !empty(file_get_contents($pidFilePath));
     }
 }

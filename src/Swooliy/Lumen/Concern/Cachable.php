@@ -2,95 +2,158 @@
 
 namespace Swooliy\Lumen\Concern;
 
+use Cache;
+use Swooliy\Lumen\Middleware\ResponseSerializer;
+
 /**
  * Http Server  base on Swoole Http Server
  *
  * @category Http_Cache
  * @package  Swooliy\Lumen
- * @author   ney <zoobile@gamail.com>
+ * @author   ney <zoobile@gmail.com>
  * @license  MIT https://github.com/swooliy/swooliy-lumen/LICENSE.md
  * @link     https://github.com/swooliy/swooliy-lumen
  */
 trait Cachable
 {
+    protected $serializer;
+
+    protected $routes;
+
+    protected $customRoutes;
 
     /**
-     * Cache instance
-     *
-     * @var Illuminate\Cache
-     */
-    protected $cache;
-
-    /**
-     * Init the cache
+     * Init cache instance
      *
      * @return void
      */
     protected function initCache()
     {
-        $this->cache = new MemoryCache(config('swooliy.cache.columns'));
+        $this->serializer = new ResponseSerializer;
+
+        $this->routes = $this->app->router->getRoutes();
+
+        $this->customRoutes = config("swooliy.cache.apis");
     }
 
     /**
-     * Can cache
+     * Set Cache
      *
-     * @param Swoole\Http\Request $swRequest current request from swoole
+     * @param Swoole\Http\Request      $request  current request from swoole
+     * @param Illumunate\Http\Response $response current response from lumen
      *
-     * @return boolean
+     * @return void
      */
-    protected function canCache($swRequest)
+    protected function setCache($request, $response)
     {
-        return $swRequest->server['request_method'] == 'GET' &&
-        isset(config('swooliy.cache.apis')[$swRequest->server['request_uri']]);
+        $uri = $request->server['request_uri'];
+        $cacheMiddleware = $this->getCacheMiddleware($uri);
+
+        if ($cacheMiddleware) {
+            $tags = $cacheMiddleware['tags'] ?? [];
+            $key  = $this->getCacheKey($uri, $cacheMiddleware['fields'] ?? []);
+
+            Cache::tags($tags)->forever(
+                $key,
+                $this->serializer->serialize($response)
+            );
+        }
     }
 
     /**
      * Has cache
      *
-     * @param Swoole\Http\Request $swRequest current request from swoole
+     * @param Swoole\Http\Request $request current request from swoole
      *
-     * @return boolean|json
+     * @return mixed
      */
-    protected function hasCache($swRequest)
+    protected function hasCache($request)
     {
-        if (!$this->canCache($swRequest)) {
+        if ($request->server['request_method'] != 'GET') {
             return false;
         }
 
-        $key = $this->getCacheKey($swRequest);
+        $uri = $request->server['request_uri'];
+        $cacheMiddleware = $this->getCacheMiddleware($uri);
 
-        if ($key) {
-            return $this->cache->tags($key['tags'])->get($key['key']);
+        if (!$cacheMiddleware) {
+            return false;
         }
 
+        $tags = $cacheMiddleware['tags'] ?? [];
+        $key  = $this->getCacheKey($request->get ?? [], $uri, $cacheMiddleware['fields'] ?? []);
+
+        if (Cache::tags($tags)->has($key)) {
+            return $this->serializer->unserialize(Cache::tags($tags)->get($key));
+        }
+
+        return false;
     }
 
     /**
      * Get cache key from current request
      *
-     * @param Swoole\Http\Request $swRequest current request from swoole
+     * @param array  $query  current query data
+     * @param string $uri    current request uri
+     * @param string $fields current cache middleare fields
      *
      * @return string
      */
-    protected function getCacheKey($swRequest)
+    protected function getCacheKey($query, $uri, $fields)
     {
-        $uri = $swRequest->server['request_uri'];
+        $uri = ltrim($uri, "/");
+        $cacheKey = 'route:' . $uri;
 
-        if (isset(config("swooliy.cache.apis")[$uri])) {
-            $info = config("swooliy.cache.apis")[$uri];
+        $queryFields = array_only(
+            $query,
+            $fields
+        );
 
-            $queryFields = array_only(
-                $request->get,
-                $info['fields']
-            );
+        $qStr = http_build_query($queryFields);
 
-            $qStr     = http_build_query($queryFields);
-            $key  = $uri . '?' . $qStr;
-            $tags = $info['tags'];
-
-            return compact('key', 'tags');
-            
+        if (!empty($qStr)) {
+            $cacheKey = 'route:' . $uri . '?' . $qStr;
         }
 
+        return $cacheKey;
+    }
+
+    /**
+     * Get cache middleware info by uri
+     *
+     * @param string $uri current request uri
+     * 
+     * @return null|array
+     */
+    protected function getCacheMiddleware($uri)
+    {
+        $route = $this->routes['GET' . $uri] ?? null;
+
+        $cacheMiddleware = null;
+
+        if ($route) {
+            $middlewares = $route['action']['middleware'] ?? [];
+
+            if (count($middlewares) > 0) {
+                foreach ($middlewares as $middleware) {
+                    if (starts_with($middleware, 'api.cache')) {
+                        $middlewareArr = explode(":", $middleware);
+                        $tagsAndFields = explode(",", $middlewareArr[1]);
+                        $cacheMiddleware = [
+                            'tags'   => explode("&", $tagsAndFields[0]), 
+                            'fields' => explode("&", $tagsAndFields[1]),
+                        ];
+                        break;
+                    }
+                }
+        
+            }
+        }
+
+        if (!$cacheMiddleware && isset($this->customRoutes[$uri])) {
+            $cacheMiddleware = $this->customRoutes[$uri];
+        }
+
+        return $cacheMiddleware;
     }
 }

@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
  * 
  * @category Artisan_Command
  * @package  Swooliy\Lumen
- * @author   ney <zoobile@gamail.com>
+ * @author   ney <zoobile@gmail.com>
  * @license  MIT 
  * @link     https://github.com/swooliy/lumen
  */
