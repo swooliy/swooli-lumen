@@ -168,30 +168,13 @@ END;
                 return;
             }
 
-            $this->initGlobalParams($swRequest);
+            $request = $this->makeIlluminateRequest($swRequest);
 
-            $response = $this->server->app->handle(Request::capture());
+            $response = $this->server->app->handle($request);
 
             $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
             $swResponse->status($response->getStatusCode());
             $swResponse->end($response->getContent());
-        } catch (Exception $e) {
-            print_r($e);
-            $swResponse->status(200);
-            $swResponse->end($e->getMessage());
-        } catch (Error $e) {
-            $error = sprintf(
-                'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
-                get_class($e),
-                $e->getCode(),
-                $e->getMessage(),
-                $e->getFile(),
-                $e->getLine(), PHP_EOL,
-                $e->getTraceAsString()
-            );
-            print_r($error);
-            $swResponse->status(500);
-            $swResponse->end('Oops! An unexpected error occurred.');
         } catch (Throwable $e) {
             $error = sprintf(
                 'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
