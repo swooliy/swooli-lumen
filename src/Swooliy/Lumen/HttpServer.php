@@ -161,9 +161,8 @@ END;
             }
 
             if (config('swooliy.cache.switch') == 1 && $response = $this->hasCache($swRequest)) {
-                var_dump("cache hit in swoole level");
-                $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
-                $swResponse->status($response->getStatusCode());
+                $swResponse->header("Content-Type", $response->headers->get('Content-Type') ?? "application/json");
+                $swResponse->status($response->status());
                 $swResponse->end($response->getContent());
                 return;
             }
@@ -172,11 +171,18 @@ END;
 
             $response = $this->server->app->handle($request);
 
-            $swResponse->header("Content-Type", $response->header["Content-Type"] ?? "application/json");
-            $swResponse->status($response->getStatusCode());
+            // If lumen return redirect, we should handle it
+            if ($location = $response->headers->get("location")) {
+                $swResponse->header('Location', $location);
+                $swResponse->status($response->status());
+                return;
+            }
+
+            $swResponse->header("Content-Type", $response->headers->get("Content-Type") ?? "application/json");
+            $swResponse->status($response->status());
             $swResponse->end($response->getContent());
         } catch (Throwable $e) {
-            $error = sprintf(
+            $error = sprintf( 
                 'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
                 get_class($e),
                 $e->getCode(),
