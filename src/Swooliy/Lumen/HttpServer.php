@@ -12,13 +12,14 @@ use Swooliy\Lumen\Concern\InteractWithRequest;
 use Swooliy\Server\AbstractHttpServer;
 
 /**
- * Http Server  base on Swoole Http Server
+ * Http Server  base on Swoole Http Server.
  *
  * @category Http_Server
- * @package  Swooliy\Lumen
+ *
  * @author   ney <zoobile@gmail.com>
  * @license  MIT https://github.com/swooliy/swooliy-lumen/LICENSE.md
- * @link     https://github.com/swooliy/swooliy-lumen
+ *
+ * @see     https://github.com/swooliy/swooliy-lumen
  */
 class HttpServer extends AbstractHttpServer
 {
@@ -35,7 +36,7 @@ class HttpServer extends AbstractHttpServer
     protected $options;
 
     /**
-     * Construct for HttpServer class
+     * Construct for HttpServer class.
      */
     public function __construct($app)
     {
@@ -59,23 +60,20 @@ END;
 
         $this->app = $app;
 
-        $this->host    = config('swooliy.server.host');
-        $this->port    = config('swooliy.server.port');
-        $this->name    = config('swooliy.server.name');
+        $this->host = config('swooliy.server.host');
+        $this->port = config('swooliy.server.port');
+        $this->name = config('swooliy.server.name');
         $this->options = config('swooliy.server.options');
 
         parent::__construct($this->host, $this->port, $this->options);
 
         $this->initCache();
-
     }
 
     /**
      * Callback when swoole http server's master process created.
      *
      * @param Swoole\Http\Server $server swoole server instance
-     *
-     * @return void
      */
     public function onMasterStarted($server)
     {
@@ -91,8 +89,6 @@ END;
      * Callback when swoole http server's manager process created.
      *
      * @param Swoole\Http\Server $server swoole server instance
-     *
-     * @return void
      */
     public function onManagerStarted($server)
     {
@@ -107,8 +103,6 @@ END;
      *
      * @param Swoole\Http\Server $server   swoole server instance
      * @param int                $workerId current worker proccess's pid
-     *
-     * @return void
      */
     public function onWorkerStarted($server, $workerId)
     {
@@ -123,17 +117,14 @@ END;
             return;
         }
 
-        $server->app = include base_path("bootstrap/app.php");
+        $server->app = include base_path('bootstrap/app.php');
 
         // clear events instance in case of repeated listeners in worker process
         Facade::clearResolvedInstance('events');
-
     }
 
     /**
      * Clear APC or OPCache.
-     *
-     * @return void
      */
     protected function clearCache()
     {
@@ -150,20 +141,28 @@ END;
      *
      * @param Swoole\Http\Request  $swRequest  current swoole request instance
      * @param Swoole\Http\Response $swResponse current swoole response instance
-     *
-     * @return void
      */
     public function onRequest($swRequest, $swResponse)
     {
         try {
+            $swReponse = $this->enableCrossRequest($swRequest, $swResponse);
+
+            if ($swRequest->server['request_method'] == 'OPTIONS') {
+                $swResponse->status(200);
+                $swReponse->end();
+
+                return;
+            }
+
             if (config('swooliy.server.options.enable_static_handler') == true && $this->handleStatic($swRequest, $swResponse)) {
                 return;
             }
 
             if (config('swooliy.cache.switch') == 1 && $response = $this->hasCache($swRequest)) {
-                $swResponse->header("Content-Type", $response->headers->get('Content-Type') ?? "application/json");
+                $swResponse->header('Content-Type', $response->headers->get('Content-Type') ?? 'application/json');
                 $swResponse->status($response->status());
                 $swResponse->end($response->getContent());
+
                 return;
             }
 
@@ -172,17 +171,18 @@ END;
             $response = $this->server->app->handle($request);
 
             // If lumen return redirect, we should handle it
-            if ($location = $response->headers->get("location")) {
+            if ($location = $response->headers->get('location')) {
                 $swResponse->header('Location', $location);
                 $swResponse->status($response->status());
+
                 return;
             }
 
-            $swResponse->header("Content-Type", $response->headers->get("Content-Type") ?? "application/json");
+            $swResponse->header('Content-Type', $response->headers->get('Content-Type') ?? 'application/json');
             $swResponse->status($response->status());
             $swResponse->end($response->getContent());
         } catch (Throwable $e) {
-            $error = sprintf( 
+            $error = sprintf(
                 'onRequest: Uncaught exception "%s"([%d]%s) at %s:%s, %s%s',
                 get_class($e),
                 $e->getCode(),
@@ -195,23 +195,20 @@ END;
             $swResponse->status(500);
             $swResponse->end('Oops! An unexpected error occurred.');
         }
-
     }
 
     /**
      * Callback when swoole http server shutdown.
      *
      * @param Swoole\Http\Server $server swoole server instance
-     *
-     * @return void
      */
     public function onShutdown($server)
     {
         echo "The server has shutdown.\n";
 
-        $pidFilePath = base_path("storage/logs/pid");
+        $pidFilePath = base_path('storage/logs/pid');
 
-        file_put_contents($pidFilePath, "");
+        file_put_contents($pidFilePath, '');
     }
 
     /**
@@ -219,8 +216,6 @@ END;
      *
      * @param Swoole\Http\Server $server   swoole server instance
      * @param int                $workerId the order number of the worker process
-     *
-     * @return void
      */
     public function onWorkerStopped($server, $workerId)
     {
@@ -235,8 +230,6 @@ END;
      * @param int                $workerPid the pid of the worker process
      * @param int                $exitCode  the status code return when the process exited
      * @param int                $signal    the signal when the process exited
-     *
-     * @return void
      */
     public function onWorkerError($server, $workerId, $workerPid, $exitCode, $signal)
     {
@@ -247,8 +240,6 @@ END;
      * Callback when swoole http server's manager process stopped.
      *
      * @param Swoole\Http\Server $server swoole server instance
-     *
-     * @return void
      */
     public function onManagerStopped($server)
     {
@@ -256,14 +247,15 @@ END;
     }
 
     /**
-     * Check the server is running or not
+     * Check the server is running or not.
      *
      * @return boolean
      */
     public static function isRunning()
     {
-        $pidFilePath = base_path("storage/logs/pid");
-        return file_exists($pidFilePath) && 
+        $pidFilePath = base_path('storage/logs/pid');
+
+        return file_exists($pidFilePath) &&
             !empty(file_get_contents($pidFilePath));
     }
 }
